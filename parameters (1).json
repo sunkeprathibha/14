@@ -1,0 +1,68 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "administratorLogin": {
+            "value": "Rasagnya"
+        },
+        "administratorLoginPassword": {
+            "value": null
+        },
+        "location": {
+            "value": "centralindia"
+        },
+        "serverName": {
+            "value": "myserver-2"
+        },
+        "serverEdition": {
+            "value": "GeneralPurpose"
+        },
+        "storageSizeMB": {
+            "value": 131072
+        },
+        "haEnabled": {
+            "value": "Disabled"
+        },
+        "availabilityZone": {
+            "value": ""
+        },
+        "version": {
+            "value": "12"
+        },
+        "tags": {
+            "value": {}
+        },
+        "firewallRules": {
+            "value": {
+                "rules": []
+            }
+        },
+        "backupRetentionDays": {
+            "value": 7
+        },
+        "geoRedundantBackup": {
+            "value": "Disabled"
+        },
+        "vmName": {
+            "value": "Standard_D2s_v3"
+        },
+        "publicNetworkAccess": {
+            "value": "Enabled"
+        },
+        "vnetData": {
+            "value": {
+                "virtualNetworkName": "testVnet",
+                "subnetName": "testSubnet",
+                "virtualNetworkAddressPrefix": "10.0.0.0/16",
+                "virtualNetworkResourceGroupName": "Rasagnya",
+                "location": "eastus2",
+                "subscriptionId": "b6700194-6522-4789-b5a1-c222828c1fba",
+                "subnetProperties": {},
+                "delegatedSubnetArguments": {},
+                "isNewVnet": false,
+                "subnetNeedsUpdate": false,
+                "privateDnsZoneArguments": {}
+            }
+        }
+    }
+}

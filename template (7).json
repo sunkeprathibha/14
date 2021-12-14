@@ -1,0 +1,142 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "administratorLogin": {
+            "type": "String"
+        },
+        "administratorLoginPassword": {
+            "type": "SecureString"
+        },
+        "location": {
+            "type": "String"
+        },
+        "serverName": {
+            "type": "String"
+        },
+        "serverEdition": {
+            "type": "String"
+        },
+        "storageSizeMB": {
+            "type": "Int"
+        },
+        "haEnabled": {
+            "defaultValue": "Disabled",
+            "type": "String"
+        },
+        "availabilityZone": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "version": {
+            "type": "String"
+        },
+        "tags": {
+            "defaultValue": {},
+            "type": "Object"
+        },
+        "firewallRules": {
+            "defaultValue": {},
+            "type": "Object"
+        },
+        "backupRetentionDays": {
+            "type": "Int"
+        },
+        "geoRedundantBackup": {
+            "type": "String"
+        },
+        "vmName": {
+            "defaultValue": "Standard_D4s_v3",
+            "type": "String"
+        },
+        "publicNetworkAccess": {
+            "type": "String",
+            "metadata": {
+                "description": "Value should be either Enabled or Disabled"
+            }
+        },
+        "vnetData": {
+            "defaultValue": {
+                "virtualNetworkName": "testVnet",
+                "subnetName": "testSubnet",
+                "virtualNetworkAddressPrefix": "10.0.0.0/16",
+                "virtualNetworkResourceGroupName": "[resourceGroup().name]",
+                "location": "eastus2",
+                "subscriptionId": "[subscription().subscriptionId]",
+                "subnetProperties": {},
+                "delegatedSubnetArguments": {},
+                "isNewVnet": false,
+                "subnetNeedsUpdate": false,
+                "privateDnsZoneArguments": {}
+            },
+            "type": "Object",
+            "metadata": {
+                "description": "Vnet data is an object which contains all parameters pertaining to vnet and subnet"
+            }
+        }
+    },
+    "variables": {
+        "api": "2020-02-14-preview",
+        "firewallRules": "[parameters('firewallRules').rules]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+            "apiVersion": "[variables('api')]",
+            "name": "[parameters('serverName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "sku": {
+                "name": "[parameters('vmName')]",
+                "tier": "[parameters('serverEdition')]"
+            },
+            "properties": {
+                "version": "[parameters('version')]",
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+                "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
+                "DelegatedSubnetArguments": "[if(empty(parameters('vnetData').delegatedSubnetArguments), json('null'), parameters('vnetData').delegatedSubnetArguments)]",
+                "PrivateDnsZoneArguments": "[if(empty(parameters('vnetData').privateDnsZoneArguments), json('null'), parameters('vnetData').privateDnsZoneArguments)]",
+                "haEnabled": "[parameters('haEnabled')]",
+                "storageProfile": {
+                    "storageMB": "[parameters('storageSizeMB')]",
+                    "backupRetentionDays": "[parameters('backupRetentionDays')]",
+                    "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+                },
+                "availabilityZone": "[parameters('availabilityZone')]"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-08-01",
+            "name": "[concat('firewallRules-', copyIndex())]",
+            "dependsOn": [
+                "[concat('Microsoft.DBforPostgreSQL/flexibleServers/', parameters('serverName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules",
+                            "name": "[concat(parameters('serverName'),'/',variables('firewallRules')[copyIndex()].name)]",
+                            "apiVersion": "[variables('api')]",
+                            "properties": {
+                                "StartIpAddress": "[variables('firewallRules')[copyIndex()].startIPAddress]",
+                                "EndIpAddress": "[variables('firewallRules')[copyIndex()].endIPAddress]"
+                            }
+                        }
+                    ]
+                }
+            },
+            "copy": {
+                "name": "firewallRulesIterator",
+                "count": "[if(greater(length(variables('firewallRules')), 0), length(variables('firewallRules')), 1)]",
+                "mode": "Serial"
+            },
+            "condition": "[greater(length(variables('firewallRules')), 0)]"
+        }
+    ]
+}
